@@ -28,8 +28,6 @@ public class FlickrObject {
     public void setStat(String stat) {
         this.stat = stat;
     }
-
-
 }
 
 
