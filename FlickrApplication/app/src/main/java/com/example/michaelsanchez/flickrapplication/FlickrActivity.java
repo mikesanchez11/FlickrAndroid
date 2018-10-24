@@ -3,6 +3,7 @@ package com.example.michaelsanchez.flickrapplication;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,9 +35,9 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class FlickrActivity extends AppCompatActivity {
-    private static final int SPAN_COUNT = 3;
-    private static final int INITIAL_PAGE_NUMBER = 1;
-    private static final String ERROR_TEXT = "Connected to the internet? Try again";
+    @VisibleForTesting private static final int SPAN_COUNT = 3;
+    @VisibleForTesting private static final int INITIAL_PAGE_NUMBER = 1;
+    @VisibleForTesting private static final String ERROR_TEXT = "Connected to the internet? Try again";
 
     AppComponent mComponent;
     boolean isRequested = false;
