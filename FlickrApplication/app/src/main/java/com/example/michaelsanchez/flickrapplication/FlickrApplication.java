@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 public class FlickrApplication extends AppCompatActivity {
@@ -37,6 +38,7 @@ public class FlickrApplication extends AppCompatActivity {
     private static final int INITIAL_PAGE_NUMBER = 1;
 
     AppComponent mComponent;
+    boolean isRequested = false;
     CompositeDisposable mDisposables = new CompositeDisposable();
     GridLayoutManager mGridLayoutManager;
     int mFirstVisibleItemPosition;
@@ -44,6 +46,7 @@ public class FlickrApplication extends AppCompatActivity {
     int mTotalItemCount;
     int mTotalPages;
     int mVisibleItemCount;
+    PhotoAdapter mPhotoAdapter;
     RecyclerView mPhotoRecyclerView;
     String mTextRequest;
 
@@ -98,8 +101,20 @@ public class FlickrApplication extends AppCompatActivity {
                         mTextRequest, mPageNumber)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(flickrObject -> mTotalPages = flickrObject.getPhotos().getPages())
-                        .subscribe(flickrObject -> mPhotoRecyclerView.setAdapter(new PhotoAdapter(flickrObject.getPhotos().getPhoto())));
+                        .subscribe(new Consumer<FlickrObject>() {
+                            @Override
+                            public void accept(FlickrObject flickrObject) throws Exception {
+                                if(!isRequested) {
+                                    mPhotoAdapter =
+                                            new PhotoAdapter(flickrObject.getPhotos().getPhoto());
+                                    isRequested = true;
+                                    mTotalPages = flickrObject.getPhotos().getPages();
+                                    mPhotoRecyclerView.setAdapter(mPhotoAdapter);
+                                } else {
+                                    mPhotoAdapter.addMoreItems(flickrObject.getPhotos().getPhoto());
+                                }
+                            }
+                        });
         mDisposables.add(disposable);
     }
 
@@ -178,6 +193,11 @@ public class FlickrApplication extends AppCompatActivity {
         @Override
         public int getItemCount() {
             return mPhotoItems.size();
+        }
+
+        public void addMoreItems(List<Photo> photoList) {
+            mPhotoItems.addAll(photoList);
+            notifyDataSetChanged();
         }
     }
 
