@@ -76,6 +76,7 @@ public class FlickrApplication extends AppCompatActivity {
                     if (mPageNumber <= mTotalPages) {
                         apiRequest();
                         mPageNumber++;
+                        mTotalItemCount = mGridLayoutManager.getItemCount();
                     }
                 }
             }
