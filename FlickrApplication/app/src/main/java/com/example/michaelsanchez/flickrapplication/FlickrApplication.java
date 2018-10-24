@@ -34,9 +34,16 @@ import io.reactivex.schedulers.Schedulers;
 
 public class FlickrApplication extends AppCompatActivity {
     private static final int SPAN_COUNT = 3;
+    private static final int INITIAL_PAGE_NUMBER = 1;
 
     AppComponent mComponent;
     CompositeDisposable mDisposables = new CompositeDisposable();
+    GridLayoutManager mGridLayoutManager;
+    int mFirstVisibleItemPosition;
+    int mPageNumber;
+    int mTotalItemCount;
+    int mTotalPages;
+    int mVisibleItemCount;
     RecyclerView mPhotoRecyclerView;
     String mTextRequest;
 
@@ -48,13 +55,26 @@ public class FlickrApplication extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flickr_application);
 
+        mGridLayoutManager = new GridLayoutManager(getApplicationContext(), SPAN_COUNT);
+
+        mPageNumber = INITIAL_PAGE_NUMBER;
         mPhotoRecyclerView = findViewById(R.id.photo_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getApplicationContext(), SPAN_COUNT));
+        mPhotoRecyclerView.setLayoutManager(mGridLayoutManager);
 
         mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+                mVisibleItemCount = mGridLayoutManager.getChildCount();
+                mTotalItemCount = mGridLayoutManager.getItemCount();
+                mFirstVisibleItemPosition = mGridLayoutManager.findFirstVisibleItemPosition();
+
+                if (mVisibleItemCount + mFirstVisibleItemPosition >= mTotalItemCount) {
+                    if (mPageNumber <= mTotalPages) {
+                        apiRequest();
+                        mPageNumber++;
+                    }
+                }
             }
         });
 
@@ -75,9 +95,10 @@ public class FlickrApplication extends AppCompatActivity {
         Disposable disposable =
                 mApiService.listObjects(FlickrApiService.method,
                         FlickrApiService.API_KEY, FlickrApiService.format, FlickrApiService.callback,
-                        mTextRequest)
+                        mTextRequest, mPageNumber)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
+                        .doOnNext(flickrObject -> mTotalPages = flickrObject.getPhotos().getPages())
                         .subscribe(flickrObject -> mPhotoRecyclerView.setAdapter(new PhotoAdapter(flickrObject.getPhotos().getPhoto())));
         mDisposables.add(disposable);
     }
@@ -106,13 +127,13 @@ public class FlickrApplication extends AppCompatActivity {
                 Log.d("TAG", "QueryTextSubmit: " + s);
                 Toast.makeText(getApplicationContext(), s, Toast.LENGTH_SHORT).show();
                 setTextRequest(s);
+                mPageNumber = INITIAL_PAGE_NUMBER;
                 apiRequest();
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String s) {
-                Log.d("TAG", "QueryTextChange: " + s);
                 return false;
             }
         });

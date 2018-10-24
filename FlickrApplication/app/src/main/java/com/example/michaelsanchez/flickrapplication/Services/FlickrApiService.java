@@ -15,9 +15,10 @@ public interface FlickrApiService {
 
     @GET("services/rest/")
     Observable<FlickrObject> listObjects(@Query("method") String method,
-                                   @Query("api_key") String API_KEY,
-                                   @Query("format") String format,
-                                   @Query("nojsoncallback") int callback,
-                                   @Query("text") String text);
+                                         @Query("api_key") String API_KEY,
+                                         @Query("format") String format,
+                                         @Query("nojsoncallback") int callback,
+                                         @Query("text") String text,
+                                         @Query("page") int pageNo);
 }
 
