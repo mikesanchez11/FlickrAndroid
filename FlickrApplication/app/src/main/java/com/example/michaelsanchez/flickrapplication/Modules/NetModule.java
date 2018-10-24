@@ -29,7 +29,7 @@ public class NetModule {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
 
         //see what the body contains for debugging
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        //interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(interceptor)

@@ -6,7 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -211,7 +210,6 @@ public class FlickrApplication extends AppCompatActivity {
                     + photo.getServer() + "/" + photo.getId() + "_"
                     + photo.getSecret() + ".jpg";
 
-            Log.d("TAG", imagePath);
             Picasso.get().load(imagePath).into(mImageView);
         }
     }
