@@ -36,6 +36,7 @@ import io.reactivex.schedulers.Schedulers;
 public class FlickrActivity extends AppCompatActivity {
     private static final int SPAN_COUNT = 3;
     private static final int INITIAL_PAGE_NUMBER = 1;
+    private static final String ERROR_TEXT = "Connected to the internet? Try again";
 
     AppComponent mComponent;
     boolean isRequested = false;
@@ -116,7 +117,7 @@ public class FlickrActivity extends AppCompatActivity {
                             } else {
                                 mPhotoAdapter.addMoreItems(flickrObject.getPhotos().getPhoto());
                             }
-                        });
+                        }, throwable -> Toast.makeText(mContext, ERROR_TEXT, Toast.LENGTH_LONG).show());
         mDisposables.add(disposable);
     }
 
@@ -141,7 +142,6 @@ public class FlickrActivity extends AppCompatActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
-                Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
                 setTextRequest(s);
                 mPageNumber = INITIAL_PAGE_NUMBER;
                 isRequested = false;
