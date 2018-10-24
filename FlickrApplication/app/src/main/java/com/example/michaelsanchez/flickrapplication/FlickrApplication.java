@@ -1,6 +1,7 @@
 package com.example.michaelsanchez.flickrapplication;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -32,14 +33,15 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class FlickrApplication extends AppCompatActivity {
-    AppComponent component;
-    CompositeDisposable disposables = new CompositeDisposable();
-    int spanCount = 3;
+    private static final int SPAN_COUNT = 3;
+
+    AppComponent mComponent;
+    CompositeDisposable mDisposables = new CompositeDisposable();
     RecyclerView mPhotoRecyclerView;
     String mTextRequest;
 
     @Inject
-    FlickrApiService apiService;
+    FlickrApiService mApiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,11 +49,18 @@ public class FlickrApplication extends AppCompatActivity {
         setContentView(R.layout.activity_flickr_application);
 
         mPhotoRecyclerView = findViewById(R.id.photo_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getApplicationContext(), spanCount));
+        mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getApplicationContext(), SPAN_COUNT));
+
+        mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+            }
+        });
 
         Stetho.initializeWithDefaults(this);
 
-        component = DaggerAppComponent.builder()
+        mComponent = DaggerAppComponent.builder()
                 .netModule(new NetModule(FlickrApiService.BASE_URL))
                 .build();
 
@@ -59,24 +68,30 @@ public class FlickrApplication extends AppCompatActivity {
     }
 
     public AppComponent getComponent() {
-        return component;
+        return mComponent;
     }
 
     public void apiRequest() {
         Disposable disposable =
-                apiService.listObjects(FlickrApiService.method,
+                mApiService.listObjects(FlickrApiService.method,
                         FlickrApiService.API_KEY, FlickrApiService.format, FlickrApiService.callback,
                         mTextRequest)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(flickrObject -> mPhotoRecyclerView.setAdapter(new PhotoAdapter(flickrObject.getPhotos().getPhoto())));
-        disposables.add(disposable);
+        mDisposables.add(disposable);
     }
 
     public void setTextRequest(String textRequest) {
         mTextRequest = textRequest;
     }
-    
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mDisposables.dispose();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -137,9 +152,7 @@ public class FlickrApplication extends AppCompatActivity {
         @Override
         public void onBindViewHolder(PhotoHolder photoHolder, int position) {
             Photo photoItem = mPhotoItems.get(position);
-            //Drawable placeholder = getResources().getDrawable(R.drawable.android_test_image);
             photoHolder.loadImage(photoItem);
-            //picasso from the data above
         }
         @Override
         public int getItemCount() {
