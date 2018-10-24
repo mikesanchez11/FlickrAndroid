@@ -1,6 +1,7 @@
 package com.example.michaelsanchez.flickrapplication.Components;
 
-import com.example.michaelsanchez.flickrapplication.FlickrApplication;
+import com.example.michaelsanchez.flickrapplication.FlickrActivity;
+import com.example.michaelsanchez.flickrapplication.Modules.AppModule;
 import com.example.michaelsanchez.flickrapplication.Modules.NetModule;
 
 import javax.inject.Singleton;
@@ -8,7 +9,7 @@ import javax.inject.Singleton;
 import dagger.Component;
 
 @Singleton
-@Component(modules = NetModule.class)
+@Component(modules = {NetModule.class, AppModule.class})
 public interface AppComponent {
-    void inject(FlickrApplication application);
+    void inject(FlickrActivity application);
 }
