@@ -1,6 +1,5 @@
 package com.example.michaelsanchez.flickrapplication;
 
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -21,23 +20,26 @@ import com.example.michaelsanchez.flickrapplication.Modules.NetModule;
 import com.example.michaelsanchez.flickrapplication.Photos.Photo;
 import com.example.michaelsanchez.flickrapplication.Services.FlickrApiService;
 import com.facebook.stetho.Stetho;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class FlickrApplication extends AppCompatActivity {
-
     AppComponent component;
-    @Inject
-    FlickrApiService apiService;
+    CompositeDisposable disposables = new CompositeDisposable();
     int spanCount = 3;
     RecyclerView mPhotoRecyclerView;
     String mTextRequest;
+
+    @Inject
+    FlickrApiService apiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,27 +63,20 @@ public class FlickrApplication extends AppCompatActivity {
     }
 
     public void apiRequest() {
-        Call<FlickrObject> call = apiService.listObjects(FlickrApiService.method,
-                FlickrApiService.API_KEY, FlickrApiService.format, FlickrApiService.callback,
-                mTextRequest);
-
-        call.enqueue(new Callback<FlickrObject>() {
-            @Override
-            public void onResponse(Call<FlickrObject> call, Response<FlickrObject> response) {
-                FlickrObject flickrObject = response.body();
-
-                Log.d("TAG", Integer.toString(response.code()));
-                Log.d("TAG", flickrObject.getPhotos().getPhoto().get(1).getTitle());
-                mPhotoRecyclerView.setAdapter(new PhotoAdapter(flickrObject.getPhotos().getPhoto()));
-            }
-
-            @Override
-            public void onFailure(Call<FlickrObject> call, Throwable t) {
-                Log.d("TAG", t.getMessage());
-            }
-        });
+        Disposable disposable =
+                apiService.listObjects(FlickrApiService.method,
+                        FlickrApiService.API_KEY, FlickrApiService.format, FlickrApiService.callback,
+                        mTextRequest)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(flickrObject -> mPhotoRecyclerView.setAdapter(new PhotoAdapter(flickrObject.getPhotos().getPhoto())));
+        disposables.add(disposable);
     }
 
+    public void setTextRequest(String textRequest) {
+        mTextRequest = textRequest;
+    }
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -127,9 +122,6 @@ public class FlickrApplication extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-    public void setTextRequest(String textRequest) {
-        mTextRequest = textRequest;
-    }
 
     private class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
         private List<Photo> mPhotoItems;
@@ -144,9 +136,9 @@ public class FlickrApplication extends AppCompatActivity {
         }
         @Override
         public void onBindViewHolder(PhotoHolder photoHolder, int position) {
-            //Photo photoItem = mPhotoItems.get(position);
-            Drawable placeholder = getResources().getDrawable(R.drawable.android_test_image);
-            photoHolder.bindDrawable(placeholder);
+            Photo photoItem = mPhotoItems.get(position);
+            //Drawable placeholder = getResources().getDrawable(R.drawable.android_test_image);
+            photoHolder.loadImage(photoItem);
             //picasso from the data above
         }
         @Override
@@ -163,8 +155,17 @@ public class FlickrApplication extends AppCompatActivity {
             mImageView = itemView.findViewById(R.id.item_image_view);
         }
 
-        public void bindDrawable(Drawable drawable) {
-            mImageView.setImageDrawable(drawable);
+        public void loadImage(Photo photo) {
+            String imagePath;
+
+            imagePath = "http://farm"
+                    + Integer.toString(photo.getFarm())
+                    + ".static.flickr.com/"
+                    + photo.getServer() + "/" + photo.getId() + "_"
+                    + photo.getSecret() + ".jpg";
+
+            Log.d("TAG", imagePath);
+            Picasso.get().load(imagePath).into(mImageView);
         }
     }
 }

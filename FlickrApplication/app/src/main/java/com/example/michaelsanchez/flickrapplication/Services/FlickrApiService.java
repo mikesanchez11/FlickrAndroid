@@ -3,7 +3,6 @@ package com.example.michaelsanchez.flickrapplication.Services;
 import com.example.michaelsanchez.flickrapplication.FlickrObject;
 
 import io.reactivex.Observable;
-import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
@@ -15,7 +14,7 @@ public interface FlickrApiService {
     String method = "flickr.photos.search";
 
     @GET("services/rest/")
-    Call<FlickrObject> listObjects(@Query("method") String method,
+    Observable<FlickrObject> listObjects(@Query("method") String method,
                                    @Query("api_key") String API_KEY,
                                    @Query("format") String format,
                                    @Query("nojsoncallback") int callback,
