@@ -30,7 +30,6 @@ import javax.inject.Inject;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 public class FlickrApplication extends AppCompatActivity {
@@ -59,7 +58,6 @@ public class FlickrApplication extends AppCompatActivity {
         setContentView(R.layout.activity_flickr_application);
 
         mGridLayoutManager = new GridLayoutManager(getApplicationContext(), SPAN_COUNT);
-
         mPageNumber = INITIAL_PAGE_NUMBER;
         mPhotoRecyclerView = findViewById(R.id.photo_recycler_view);
         mPhotoRecyclerView.setLayoutManager(mGridLayoutManager);
@@ -102,18 +100,15 @@ public class FlickrApplication extends AppCompatActivity {
                         mTextRequest, mPageNumber)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Consumer<FlickrObject>() {
-                            @Override
-                            public void accept(FlickrObject flickrObject) throws Exception {
-                                if(!isRequested) {
-                                    mPhotoAdapter =
-                                            new PhotoAdapter(flickrObject.getPhotos().getPhoto());
-                                    isRequested = true;
-                                    mTotalPages = flickrObject.getPhotos().getPages();
-                                    mPhotoRecyclerView.setAdapter(mPhotoAdapter);
-                                } else {
-                                    mPhotoAdapter.addMoreItems(flickrObject.getPhotos().getPhoto());
-                                }
+                        .subscribe(flickrObject -> {
+                            if(!isRequested) {
+                                mPhotoAdapter =
+                                        new PhotoAdapter(flickrObject.getPhotos().getPhoto());
+                                isRequested = true;
+                                mTotalPages = flickrObject.getPhotos().getPages();
+                                mPhotoRecyclerView.setAdapter(mPhotoAdapter);
+                            } else {
+                                mPhotoAdapter.addMoreItems(flickrObject.getPhotos().getPhoto());
                             }
                         });
         mDisposables.add(disposable);
@@ -140,10 +135,10 @@ public class FlickrApplication extends AppCompatActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
-                Log.d("TAG", "QueryTextSubmit: " + s);
                 Toast.makeText(getApplicationContext(), s, Toast.LENGTH_SHORT).show();
                 setTextRequest(s);
                 mPageNumber = INITIAL_PAGE_NUMBER;
+                isRequested = false;
                 apiRequest();
                 return true;
             }
@@ -154,12 +149,9 @@ public class FlickrApplication extends AppCompatActivity {
             }
         });
 
-        searchView.setOnSearchClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String query = QueryPreferences.getStoredQuery(getApplicationContext());
-                searchView.setQuery(query, false);
-            }
+        searchView.setOnSearchClickListener(v -> {
+            String query = QueryPreferences.getStoredQuery(getApplicationContext());
+            searchView.setQuery(query, false);
         });
         return true;
     }
