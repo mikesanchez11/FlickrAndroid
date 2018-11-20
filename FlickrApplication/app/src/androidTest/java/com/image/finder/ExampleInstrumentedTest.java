@@ -1,4 +1,4 @@
-package com.example.michaelsanchez.flickrapplication;
+package com.image.finder;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

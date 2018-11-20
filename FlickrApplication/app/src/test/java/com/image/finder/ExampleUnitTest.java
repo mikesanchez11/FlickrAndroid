@@ -1,4 +1,4 @@
-package com.example.michaelsanchez.flickrapplication;
+package com.image.finder;
 
 import org.junit.Test;
 

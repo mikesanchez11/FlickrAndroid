@@ -1,37 +1,22 @@
 package com.image.finder.Models;
 
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+@SuppressWarnings("unused")
 public class Photo {
 
-    @SerializedName("id")
-    @Expose
     private String id;
-    @SerializedName("owner")
-    @Expose
     private String owner;
-    @SerializedName("secret")
-    @Expose
     private String secret;
-    @SerializedName("server")
-    @Expose
     private String server;
-    @SerializedName("farm")
-    @Expose
     private Integer farm;
-    @SerializedName("title")
-    @Expose
     private String title;
     @SerializedName("ispublic")
-    @Expose
-    private Integer ispublic;
+    private Integer isPublic;
     @SerializedName("isfriend")
-    @Expose
-    private Integer isfriend;
+    private Integer isFriend;
     @SerializedName("isfamily")
-    @Expose
-    private Integer isfamily;
+    private Integer isFamily;
 
     public String getId() {
         return id;
@@ -81,29 +66,28 @@ public class Photo {
         this.title = title;
     }
 
-    public Integer getIspublic() {
-        return ispublic;
+    public Integer getIsPublic() {
+        return isPublic;
     }
 
-    public void setIspublic(Integer ispublic) {
-        this.ispublic = ispublic;
+    public void setIsPublic(Integer isPublic) {
+        this.isPublic = isPublic;
     }
 
-    public Integer getIsfriend() {
-        return isfriend;
+    public Integer getIsFriend() {
+        return isFriend;
     }
 
-    public void setIsfriend(Integer isfriend) {
-        this.isfriend = isfriend;
+    public void setIsFriend(Integer isFriend) {
+        this.isFriend = isFriend;
     }
 
-    public Integer getIsfamily() {
-        return isfamily;
+    public Integer getIsFamily() {
+        return isFamily;
     }
 
-    public void setIsfamily(Integer isfamily) {
-        this.isfamily = isfamily;
+    public void setIsFamily(Integer isFamily) {
+        this.isFamily = isFamily;
     }
-
 }
 

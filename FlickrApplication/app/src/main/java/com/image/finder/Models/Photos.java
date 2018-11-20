@@ -1,26 +1,17 @@
 package com.image.finder.Models;
 
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class Photos {
 
-    @SerializedName("page")
-    @Expose
     private Integer page;
-    @SerializedName("pages")
-    @Expose
     private Integer pages;
     @SerializedName("perpage")
-    @Expose
-    private Integer perpage;
-    @SerializedName("total")
-    @Expose
+    private Integer perPage;
     private String total;
-    @SerializedName("photo")
-    @Expose
     private List<Photo> photo = null;
 
     public Integer getPage() {
@@ -39,12 +30,12 @@ public class Photos {
         this.pages = pages;
     }
 
-    public Integer getPerpage() {
-        return perpage;
+    public Integer getPerPage() {
+        return perPage;
     }
 
-    public void setPerpage(Integer perpage) {
-        this.perpage = perpage;
+    public void setPerPage(Integer perPage) {
+        this.perPage = perPage;
     }
 
     public String getTotal() {
@@ -62,5 +53,4 @@ public class Photos {
     public void setPhoto(List<Photo> photo) {
         this.photo = photo;
     }
-
 }
