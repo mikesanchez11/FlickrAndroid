@@ -1,15 +1,9 @@
 package com.image.finder.Models;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
-
 public class PhotoPayload {
 
-    @SerializedName("photos")
-    @Expose
     private Photos photos;
-    @SerializedName("stat")
-    @Expose
+
     private String stat;
 
     public Photos getPhotos() {
