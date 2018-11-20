@@ -1,4 +1,4 @@
-package com.example.michaelsanchez.flickrapplication;
+package com.image.finder;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.michaelsanchez.flickrapplication.Photos.Photo;
+import com.image.finder.Models.Photo;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
     public PhotoHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         View view = inflater.inflate(R.layout.list_item_gallery, viewGroup, false);
-        return new PhotoHolder(view, mContext);
+        return new PhotoHolder(view);
     }
     @Override
     public void onBindViewHolder(PhotoHolder photoHolder, int position) {

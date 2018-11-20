@@ -1,31 +1,22 @@
-package com.example.michaelsanchez.flickrapplication;
+package com.image.finder;
 
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.example.michaelsanchez.flickrapplication.Components.AppComponent;
-import com.example.michaelsanchez.flickrapplication.Components.DaggerAppComponent;
-import com.example.michaelsanchez.flickrapplication.Modules.AppModule;
-import com.example.michaelsanchez.flickrapplication.Modules.NetModule;
-import com.example.michaelsanchez.flickrapplication.Photos.Photo;
-import com.example.michaelsanchez.flickrapplication.Services.FlickrApiService;
+import com.image.finder.Components.AppComponent;
+import com.image.finder.Components.DaggerAppComponent;
+import com.image.finder.Modules.AppModule;
+import com.image.finder.Modules.NetModule;
+import com.image.finder.Services.FlickrApiService;
 import com.facebook.stetho.Stetho;
-import com.squareup.picasso.Picasso;
-
-import java.util.List;
 
 import javax.inject.Inject;
 
@@ -35,20 +26,24 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class FlickrActivity extends AppCompatActivity {
-    @VisibleForTesting private static final int SPAN_COUNT = 3;
-    @VisibleForTesting private static final int INITIAL_PAGE_NUMBER = 1;
-    @VisibleForTesting private static final String ERROR_TEXT = "Connected to the internet? Try again";
+    private static final int CALLBACK = 1;
+    private static final int SPAN_COUNT = 3;
+    private static final int INITIAL_PAGE_NUMBER = 1;
+    private static final String API_KEY = "3e7cc266ae2b0e0d78e279ce8e361736";
+    private static final String BASE_URL = "https://api.flickr.com/";
+    private static final String ERROR_TEXT = "Connected to the internet? Try again";
+    private static final String FORMAT = "json";
+    private static final String METHOD = "flickr.photos.search";
 
     AppComponent mComponent;
     boolean isRequested = false;
-    GridLayoutManager mGridLayoutManager;
     int mFirstVisibleItemPosition;
-    int mPageNumber;
+    private int mPageNumber;
+    private int mTotalPages;
     int mTotalItemCount;
-    int mTotalPages;
     int mVisibleItemCount;
-    RecyclerView mPhotoRecyclerView;
-    String mTextRequest;
+    private RecyclerView mPhotoRecyclerView;
+    private String mTextRequest;
 
     @Inject
     FlickrApiService mApiService;
@@ -64,29 +59,29 @@ public class FlickrActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flickr_application);
 
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(mContext, SPAN_COUNT);
+
         mComponent = DaggerAppComponent.builder()
-                .netModule(new NetModule(FlickrApiService.BASE_URL))
+                .netModule(new NetModule(BASE_URL))
                 .appModule(new AppModule(getApplicationContext()))
                 .build();
-        
-        mGridLayoutManager = new GridLayoutManager(mContext, SPAN_COUNT);
+
         mPageNumber = INITIAL_PAGE_NUMBER;
         mPhotoRecyclerView = findViewById(R.id.photo_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(mGridLayoutManager);
-
+        mPhotoRecyclerView.setLayoutManager(gridLayoutManager);
         mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                mVisibleItemCount = mGridLayoutManager.getChildCount();
-                mTotalItemCount = mGridLayoutManager.getItemCount();
-                mFirstVisibleItemPosition = mGridLayoutManager.findFirstVisibleItemPosition();
+                mVisibleItemCount = gridLayoutManager.getChildCount();
+                mTotalItemCount = gridLayoutManager.getItemCount();
+                mFirstVisibleItemPosition = gridLayoutManager.findFirstVisibleItemPosition();
 
-                if (mVisibleItemCount + mFirstVisibleItemPosition >= mTotalItemCount) {
+                if (mVisibleItemCount + mFirstVisibleItemPosition >= mTotalItemCount) { // amount of items that are being shown plus the previous items displayed
                     if (mPageNumber <= mTotalPages) {
                         apiRequest();
                         mPageNumber++;
-                        mTotalItemCount = mGridLayoutManager.getItemCount();
+                        mTotalItemCount = gridLayoutManager.getItemCount();
                     }
                 }
             }
@@ -103,20 +98,20 @@ public class FlickrActivity extends AppCompatActivity {
 
     public void apiRequest() {
         Disposable disposable =
-                mApiService.listObjects(FlickrApiService.method,
-                        FlickrApiService.API_KEY, FlickrApiService.format, FlickrApiService.callback,
+                mApiService.listObjects(METHOD,
+                        API_KEY, FORMAT, CALLBACK,
                         mTextRequest, mPageNumber)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(flickrObject -> {
+                        .subscribe(photoPayload -> {
                             if(!isRequested) {
                                 mPhotoAdapter.updatingPhotoAdapter(
-                                        flickrObject.getPhotos().getPhoto(), mContext);
+                                        photoPayload.getPhotos().getPhoto(), mContext);
                                 isRequested = true;
-                                mTotalPages = flickrObject.getPhotos().getPages();
+                                mTotalPages = photoPayload.getPhotos().getPages();
                                 mPhotoRecyclerView.setAdapter(mPhotoAdapter);
                             } else {
-                                mPhotoAdapter.addMoreItems(flickrObject.getPhotos().getPhoto());
+                                mPhotoAdapter.addMoreItems(photoPayload.getPhotos().getPhoto());
                             }
                         }, throwable -> Toast.makeText(mContext, ERROR_TEXT, Toast.LENGTH_LONG).show());
         mDisposables.add(disposable);
@@ -155,22 +150,6 @@ public class FlickrActivity extends AppCompatActivity {
                 return false;
             }
         });
-
-        searchView.setOnSearchClickListener(v -> {
-            String query = QueryPreferences.getStoredQuery(mContext);
-            searchView.setQuery(query, false);
-        });
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_item_clear:
-                QueryPreferences.setStoredQuery(mContext, null);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
 }

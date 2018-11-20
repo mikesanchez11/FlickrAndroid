@@ -1,10 +1,9 @@
-package com.example.michaelsanchez.flickrapplication;
+package com.image.finder.Models;
 
-import com.example.michaelsanchez.flickrapplication.Photos.Photos;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class FlickrObject {
+public class PhotoPayload {
 
     @SerializedName("photos")
     @Expose

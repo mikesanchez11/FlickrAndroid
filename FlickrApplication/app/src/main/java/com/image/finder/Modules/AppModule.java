@@ -1,8 +1,8 @@
-package com.example.michaelsanchez.flickrapplication.Modules;
+package com.image.finder.Modules;
 
 import android.content.Context;
 
-import com.example.michaelsanchez.flickrapplication.PhotoAdapter;
+import com.image.finder.PhotoAdapter;
 
 import javax.inject.Singleton;
 

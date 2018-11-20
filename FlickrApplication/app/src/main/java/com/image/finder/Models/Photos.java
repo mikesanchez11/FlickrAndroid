@@ -1,4 +1,4 @@
-package com.example.michaelsanchez.flickrapplication.Photos;
+package com.image.finder.Models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
