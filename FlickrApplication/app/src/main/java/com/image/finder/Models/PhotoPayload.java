@@ -1,4 +1,4 @@
-package com.image.finder.Models;
+package com.image.finder.models;
 
 public class PhotoPayload {
 

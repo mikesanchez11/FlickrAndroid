@@ -1,6 +1,6 @@
-package com.image.finder.Services;
+package com.image.finder.retrofit;
 
-import com.image.finder.Models.PhotoPayload;
+import com.image.finder.models.PhotoPayload;
 
 import io.reactivex.Observable;
 import retrofit2.http.GET;

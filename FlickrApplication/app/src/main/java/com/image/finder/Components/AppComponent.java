@@ -1,8 +1,8 @@
-package com.image.finder.Components;
+package com.image.finder.components;
 
 import com.image.finder.FlickrActivity;
-import com.image.finder.Modules.AppModule;
-import com.image.finder.Modules.NetModule;
+import com.image.finder.modules.AppModule;
+import com.image.finder.modules.NetModule;
 
 import javax.inject.Singleton;
 

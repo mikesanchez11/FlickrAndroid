@@ -1,4 +1,4 @@
-package com.image.finder.Modules;
+package com.image.finder.modules;
 
 import android.content.Context;
 
@@ -16,12 +16,6 @@ public class AppModule {
 
     public AppModule(Context context) {
         mContext = context;
-    }
-
-    @Provides
-    @Singleton
-    CompositeDisposable providesCompositeDisposable() {
-        return new CompositeDisposable();
     }
 
     @Provides
