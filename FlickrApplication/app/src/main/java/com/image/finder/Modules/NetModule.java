@@ -1,6 +1,6 @@
-package com.image.finder.Modules;
+package com.image.finder.modules;
 
-import com.image.finder.Services.FlickrApiService;
+import com.image.finder.retrofit.FlickrApiService;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

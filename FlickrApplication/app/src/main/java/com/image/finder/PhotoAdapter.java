@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.image.finder.Models.Photo;
+import com.image.finder.models.Photo;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
     @Override
     public void onBindViewHolder(PhotoHolder photoHolder, int position) {
         Photo photoItem = mPhotoItems.get(position);
-        photoHolder.loadImage(photoItem);
+        photoHolder.bind(photoItem);
     }
     @Override
     public int getItemCount() {

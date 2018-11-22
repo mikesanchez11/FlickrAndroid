@@ -11,21 +11,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.image.finder.Components.AppComponent;
-import com.image.finder.Components.DaggerAppComponent;
-import com.image.finder.Modules.AppModule;
-import com.image.finder.Modules.NetModule;
-import com.image.finder.Services.FlickrApiService;
 import com.facebook.stetho.Stetho;
+import com.image.finder.components.AppComponent;
+import com.image.finder.components.DaggerAppComponent;
+import com.image.finder.models.PhotoPayload;
+import com.image.finder.modules.AppModule;
+import com.image.finder.modules.NetModule;
+import com.image.finder.retrofit.FlickrApiService;
 
 import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class FlickrActivity extends AppCompatActivity {
+import static com.uber.autodispose.AutoDispose.autoDisposable;
+import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
+
+public class FlickrActivity extends AppCompatActivity implements  {
     private static final int CALLBACK = 1;
     private static final int SPAN_COUNT = 3;
     private static final int INITIAL_PAGE_NUMBER = 1;
@@ -47,8 +49,6 @@ public class FlickrActivity extends AppCompatActivity {
 
     @Inject
     FlickrApiService mApiService;
-    @Inject
-    CompositeDisposable mDisposables;
     @Inject
     Context mContext;
     @Inject
@@ -97,34 +97,31 @@ public class FlickrActivity extends AppCompatActivity {
     }
 
     public void apiRequest() {
-        Disposable disposable =
-                mApiService.listObjects(METHOD,
-                        API_KEY, FORMAT, CALLBACK,
-                        mTextRequest, mPageNumber)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(photoPayload -> {
-                            if(!isRequested) {
-                                mPhotoAdapter.updatingPhotoAdapter(
-                                        photoPayload.getPhotos().getPhoto(), mContext);
-                                isRequested = true;
-                                mTotalPages = photoPayload.getPhotos().getPages();
-                                mPhotoRecyclerView.setAdapter(mPhotoAdapter);
-                            } else {
-                                mPhotoAdapter.addMoreItems(photoPayload.getPhotos().getPhoto());
-                            }
-                        }, throwable -> Toast.makeText(mContext, ERROR_TEXT, Toast.LENGTH_LONG).show());
-        mDisposables.add(disposable);
+        mApiService.listObjects(METHOD,
+                API_KEY, FORMAT, CALLBACK,
+                mTextRequest, mPageNumber)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .as(autoDisposable(from(this)))
+                .subscribe(photoPayload -> {
+                    handlerRequest(photoPayload);
+                }, throwable -> Toast.makeText(mContext, ERROR_TEXT, Toast.LENGTH_LONG).show());
+    }
+
+    private void handlerRequest(PhotoPayload photoPayload) {
+        if(!isRequested) {
+            mPhotoAdapter.updatingPhotoAdapter(
+                    photoPayload.getPhotos().getPhoto(), mContext);
+            isRequested = true;
+            mTotalPages = photoPayload.getPhotos().getPages();
+            mPhotoRecyclerView.setAdapter(mPhotoAdapter);
+        } else {
+            mPhotoAdapter.addMoreItems(photoPayload.getPhotos().getPhoto());
+        }
     }
 
     public void setTextRequest(String textRequest) {
         mTextRequest = textRequest;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mDisposables.dispose();
     }
 
     @Override

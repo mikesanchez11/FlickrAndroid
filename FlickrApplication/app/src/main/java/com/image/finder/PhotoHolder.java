@@ -4,18 +4,18 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.image.finder.Models.Photo;
+import com.image.finder.models.Photo;
 import com.squareup.picasso.Picasso;
 
-public class PhotoHolder extends RecyclerView.ViewHolder {
+class PhotoHolder extends RecyclerView.ViewHolder {
     private ImageView mImageView;
 
-    public PhotoHolder(View itemView) {
+    PhotoHolder(View itemView) {
         super(itemView);
         mImageView = itemView.findViewById(R.id.item_image_view);
     }
 
-    public void loadImage(Photo photo) {
+    void bind(Photo photo) {
         String imagePath = "http://farm"
                 + Integer.toString(photo.getFarm())
                 + ".static.flickr.com/"
