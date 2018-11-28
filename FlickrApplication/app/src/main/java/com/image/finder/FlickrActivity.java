@@ -6,9 +6,10 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
@@ -18,6 +19,7 @@ import com.image.finder.models.PhotoPayload;
 import com.image.finder.modules.AppModule;
 import com.image.finder.modules.NetModule;
 import com.image.finder.retrofit.FlickrApiService;
+import com.jakewharton.rxbinding2.widget.RxSearchView;
 
 import javax.inject.Inject;
 
@@ -27,7 +29,7 @@ import io.reactivex.schedulers.Schedulers;
 import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 
-public class FlickrActivity extends AppCompatActivity implements  {
+public class FlickrActivity extends AppCompatActivity {
     private static final int CALLBACK = 1;
     private static final int SPAN_COUNT = 3;
     private static final int INITIAL_PAGE_NUMBER = 1;
@@ -57,7 +59,7 @@ public class FlickrActivity extends AppCompatActivity implements  {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_flickr_application);
+        setContentView(R.layout.activity_flickr_layout);
 
         GridLayoutManager gridLayoutManager = new GridLayoutManager(mContext, SPAN_COUNT);
 
@@ -103,9 +105,8 @@ public class FlickrActivity extends AppCompatActivity implements  {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .as(autoDisposable(from(this)))
-                .subscribe(photoPayload -> {
-                    handlerRequest(photoPayload);
-                }, throwable -> Toast.makeText(mContext, ERROR_TEXT, Toast.LENGTH_LONG).show());
+                .subscribe(this::handlerRequest,
+                        throwable -> Toast.makeText(mContext, ERROR_TEXT, Toast.LENGTH_LONG).show());
     }
 
     private void handlerRequest(PhotoPayload photoPayload) {
@@ -132,21 +133,17 @@ public class FlickrActivity extends AppCompatActivity implements  {
         MenuItem searchItem = menu.findItem(R.id.menu_item_search);
         final SearchView searchView = (SearchView) searchItem.getActionView();
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String s) {
-                setTextRequest(s);
-                mPageNumber = INITIAL_PAGE_NUMBER;
-                isRequested = false;
-                apiRequest();
-                return true;
-            }
+        RxSearchView.queryTextChangeEvents(searchView)
+                .filter(charSequence -> charSequence.isSubmitted())
+                .distinctUntilChanged()
+                .subscribe(charSequence -> {
+                        setTextRequest(charSequence.queryText().toString());
+                        mPageNumber = INITIAL_PAGE_NUMBER;
+                        isRequested = false;
+                        Log.d("Query Event", charSequence.queryText().toString());
+                        apiRequest();
+                });
 
-            @Override
-            public boolean onQueryTextChange(String s) {
-                return false;
-            }
-        });
         return true;
     }
 }

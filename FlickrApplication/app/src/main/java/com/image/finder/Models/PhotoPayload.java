@@ -1,5 +1,6 @@
 package com.image.finder.models;
 
+@SuppressWarnings("unused")
 public class PhotoPayload {
 
     private Photos photos;
