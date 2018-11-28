@@ -6,7 +6,6 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SearchView;
@@ -136,14 +135,12 @@ public class FlickrActivity extends AppCompatActivity {
         RxSearchView.queryTextChangeEvents(searchView)
                 .filter(charSequence -> charSequence.isSubmitted())
                 .distinctUntilChanged()
-                .subscribe(charSequence -> {
-                        setTextRequest(charSequence.queryText().toString());
+                .subscribe(requestText -> {
+                        setTextRequest(requestText.queryText().toString());
                         mPageNumber = INITIAL_PAGE_NUMBER;
                         isRequested = false;
-                        Log.d("Query Event", charSequence.queryText().toString());
                         apiRequest();
                 });
-
         return true;
     }
 }
