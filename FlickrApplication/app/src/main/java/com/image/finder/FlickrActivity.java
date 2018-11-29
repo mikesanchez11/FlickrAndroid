@@ -21,7 +21,9 @@ import com.image.finder.retrofit.FlickrApiService;
 import com.jakewharton.rxbinding2.widget.RxSearchView;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+import dagger.Provides;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
@@ -38,7 +40,6 @@ public class FlickrActivity extends AppCompatActivity {
     private static final String FORMAT = "json";
     private static final String METHOD = "flickr.photos.search";
 
-    AppComponent mComponent;
     boolean isRequested = false;
     int mFirstVisibleItemPosition;
     private int mPageNumber;
@@ -51,7 +52,7 @@ public class FlickrActivity extends AppCompatActivity {
     @Inject
     FlickrApiService mApiService;
     @Inject
-    Context mContext;
+    FlickrController mController;
     @Inject
     PhotoAdapter mPhotoAdapter;
 
@@ -60,11 +61,18 @@ public class FlickrActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flickr_layout);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(mContext, SPAN_COUNT);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, SPAN_COUNT);
 
-        mComponent = DaggerAppComponent.builder()
-                .netModule(new NetModule(BASE_URL))
+        AppComponent appComponent = DaggerAppComponent.builder()
                 .appModule(new AppModule(getApplicationContext()))
+                .netModule(new NetModule(BASE_URL))
+                .build();
+
+        appComponent.inject(getApplication());
+
+        Component component = DaggerFlickrActivity_Component.builder()
+                .appComponent(appComponent)
+                .module(new Module())
                 .build();
 
         mPageNumber = INITIAL_PAGE_NUMBER;
@@ -90,11 +98,7 @@ public class FlickrActivity extends AppCompatActivity {
 
         Stetho.initializeWithDefaults(this);
 
-        getComponent().inject(this);
-    }
-
-    public AppComponent getComponent() {
-        return mComponent;
+        component.inject(this);
     }
 
     public void apiRequest() {
@@ -105,13 +109,13 @@ public class FlickrActivity extends AppCompatActivity {
                 .observeOn(AndroidSchedulers.mainThread())
                 .as(autoDisposable(from(this)))
                 .subscribe(this::handlerRequest,
-                        throwable -> Toast.makeText(mContext, ERROR_TEXT, Toast.LENGTH_LONG).show());
+                        throwable -> Toast.makeText(this, ERROR_TEXT, Toast.LENGTH_LONG).show());
     }
 
     private void handlerRequest(PhotoPayload photoPayload) {
         if(!isRequested) {
             mPhotoAdapter.updatingPhotoAdapter(
-                    photoPayload.getPhotos().getPhoto(), mContext);
+                    photoPayload.getPhotos().getPhoto(), this);
             isRequested = true;
             mTotalPages = photoPayload.getPhotos().getPages();
             mPhotoRecyclerView.setAdapter(mPhotoAdapter);
@@ -142,5 +146,24 @@ public class FlickrActivity extends AppCompatActivity {
                         apiRequest();
                 });
         return true;
+    }
+
+    @FlickrActivityScope
+    @dagger.Component(modules = Module.class, dependencies = AppComponent.class)
+    interface Component {
+        void inject(FlickrActivity flickrActivity);
+    }
+
+    @dagger.Module
+    static class Module {
+        @Provides
+        FlickrController providesFlickrController() {
+            return new FlickrController();
+        }
+
+        @Provides
+        PhotoAdapter providesPhotoAdapter() {
+            return new PhotoAdapter();
+        }
     }
 }

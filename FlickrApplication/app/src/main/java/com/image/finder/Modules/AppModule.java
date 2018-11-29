@@ -23,10 +23,4 @@ public class AppModule {
     Context providesContext() {
         return mContext;
     }
-
-    @Provides
-    @Singleton
-    PhotoAdapter providesPhotoAdapter() {
-        return new PhotoAdapter();
-    }
 }
