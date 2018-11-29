@@ -1,7 +1,6 @@
 package com.image.finder.components;
 
-import android.app.Application;
-
+import com.image.finder.FlickrApplication;
 import com.image.finder.modules.AppModule;
 import com.image.finder.modules.NetModule;
 import com.image.finder.retrofit.FlickrApiService;
@@ -13,7 +12,7 @@ import dagger.Component;
 @Singleton
 @Component(modules = {NetModule.class, AppModule.class})
 public interface AppComponent {
-    void inject(Application application);
+    void inject(FlickrApplication application);
 
     FlickrApiService flickrApiService();
 }

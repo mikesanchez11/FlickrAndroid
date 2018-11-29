@@ -1,6 +1,5 @@
 package com.image.finder;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -13,15 +12,11 @@ import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
 import com.image.finder.components.AppComponent;
-import com.image.finder.components.DaggerAppComponent;
 import com.image.finder.models.PhotoPayload;
-import com.image.finder.modules.AppModule;
-import com.image.finder.modules.NetModule;
 import com.image.finder.retrofit.FlickrApiService;
 import com.jakewharton.rxbinding2.widget.RxSearchView;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import dagger.Provides;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -35,7 +30,6 @@ public class FlickrActivity extends AppCompatActivity {
     private static final int SPAN_COUNT = 3;
     private static final int INITIAL_PAGE_NUMBER = 1;
     private static final String API_KEY = "3e7cc266ae2b0e0d78e279ce8e361736";
-    private static final String BASE_URL = "https://api.flickr.com/";
     private static final String ERROR_TEXT = "Connected to the internet? Try again";
     private static final String FORMAT = "json";
     private static final String METHOD = "flickr.photos.search";
@@ -63,15 +57,8 @@ public class FlickrActivity extends AppCompatActivity {
 
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, SPAN_COUNT);
 
-        AppComponent appComponent = DaggerAppComponent.builder()
-                .appModule(new AppModule(getApplicationContext()))
-                .netModule(new NetModule(BASE_URL))
-                .build();
-
-        appComponent.inject(getApplication());
-
         Component component = DaggerFlickrActivity_Component.builder()
-                .appComponent(appComponent)
+                .appComponent(((FlickrApplication) getApplication()).getAppComponent())
                 .module(new Module())
                 .build();
 
