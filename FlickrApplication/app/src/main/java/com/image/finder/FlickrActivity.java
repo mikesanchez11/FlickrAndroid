@@ -8,43 +8,28 @@ import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SearchView;
-import android.widget.Toast;
 
-import com.facebook.stetho.Stetho;
 import com.image.finder.components.AppComponent;
-import com.image.finder.models.PhotoPayload;
 import com.image.finder.retrofit.FlickrApiService;
 import com.jakewharton.rxbinding2.widget.RxSearchView;
 
 import javax.inject.Inject;
 
 import dagger.Provides;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
-
-import static com.uber.autodispose.AutoDispose.autoDisposable;
-import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 
 public class FlickrActivity extends AppCompatActivity {
-    private static final int CALLBACK = 1;
     private static final int SPAN_COUNT = 3;
     private static final int INITIAL_PAGE_NUMBER = 1;
-    private static final String API_KEY = "3e7cc266ae2b0e0d78e279ce8e361736";
-    private static final String ERROR_TEXT = "Connected to the internet? Try again";
-    private static final String FORMAT = "json";
-    private static final String METHOD = "flickr.photos.search";
 
-    boolean isRequested = false;
+    static boolean isRequested = false;
     int mFirstVisibleItemPosition;
     private int mPageNumber;
-    private int mTotalPages;
+    static int mTotalPages;
     int mTotalItemCount;
     int mVisibleItemCount;
     private RecyclerView mPhotoRecyclerView;
     private String mTextRequest;
 
-    @Inject
-    FlickrApiService mApiService;
     @Inject
     FlickrController mController;
     @Inject
@@ -55,16 +40,13 @@ public class FlickrActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flickr_layout);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, SPAN_COUNT);
-
-        Component component = DaggerFlickrActivity_Component.builder()
-                .appComponent(((FlickrApplication) getApplication()).getAppComponent())
-                .module(new Module())
-                .build();
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, SPAN_COUNT); // inject this one
 
         mPageNumber = INITIAL_PAGE_NUMBER;
         mPhotoRecyclerView = findViewById(R.id.photo_recycler_view);
         mPhotoRecyclerView.setLayoutManager(gridLayoutManager);
+
+        //rxrecycler  
         mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -75,7 +57,7 @@ public class FlickrActivity extends AppCompatActivity {
 
                 if (mVisibleItemCount + mFirstVisibleItemPosition >= mTotalItemCount) { // amount of items that are being shown plus the previous items displayed
                     if (mPageNumber <= mTotalPages) {
-                        apiRequest();
+                        //getListOfPhotos(mTextRequest, mTotalPages);
                         mPageNumber++;
                         mTotalItemCount = gridLayoutManager.getItemCount();
                     }
@@ -83,36 +65,12 @@ public class FlickrActivity extends AppCompatActivity {
             }
         });
 
-        Stetho.initializeWithDefaults(this);
+        Component component = DaggerFlickrActivity_Component.builder()
+                .appComponent(((FlickrApplication) getApplication()).getAppComponent())
+                .module(new Module(this))
+                .build();
 
         component.inject(this);
-    }
-
-    public void apiRequest() {
-        mApiService.listObjects(METHOD,
-                API_KEY, FORMAT, CALLBACK,
-                mTextRequest, mPageNumber)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .as(autoDisposable(from(this)))
-                .subscribe(this::handlerRequest,
-                        throwable -> Toast.makeText(this, ERROR_TEXT, Toast.LENGTH_LONG).show());
-    }
-
-    private void handlerRequest(PhotoPayload photoPayload) {
-        if(!isRequested) {
-            mPhotoAdapter.updatingPhotoAdapter(
-                    photoPayload.getPhotos().getPhoto(), this);
-            isRequested = true;
-            mTotalPages = photoPayload.getPhotos().getPages();
-            mPhotoRecyclerView.setAdapter(mPhotoAdapter);
-        } else {
-            mPhotoAdapter.addMoreItems(photoPayload.getPhotos().getPhoto());
-        }
-    }
-
-    public void setTextRequest(String textRequest) {
-        mTextRequest = textRequest;
     }
 
     @Override
@@ -123,16 +81,24 @@ public class FlickrActivity extends AppCompatActivity {
         MenuItem searchItem = menu.findItem(R.id.menu_item_search);
         final SearchView searchView = (SearchView) searchItem.getActionView();
 
+        observingUserInput(searchView);
+
+        return true;
+    }
+
+    private void observingUserInput(SearchView searchView) {
         RxSearchView.queryTextChangeEvents(searchView)
                 .filter(charSequence -> charSequence.isSubmitted())
                 .distinctUntilChanged()
                 .subscribe(requestText -> {
-                        setTextRequest(requestText.queryText().toString());
                         mPageNumber = INITIAL_PAGE_NUMBER;
                         isRequested = false;
-                        apiRequest();
+                        mController.getListOfPhotos(requestText.queryText().toString(), mPageNumber);
                 });
-        return true;
+    }
+
+    public RecyclerView getPhotoRecyclerView() {
+        return mPhotoRecyclerView;
     }
 
     @FlickrActivityScope
@@ -143,14 +109,20 @@ public class FlickrActivity extends AppCompatActivity {
 
     @dagger.Module
     static class Module {
-        @Provides
-        FlickrController providesFlickrController() {
-            return new FlickrController();
+        FlickrActivity mFlickrActivity;
+
+        public Module(FlickrActivity activity) {
+            mFlickrActivity = activity;
         }
 
         @Provides
         PhotoAdapter providesPhotoAdapter() {
             return new PhotoAdapter();
+        }
+
+        @Provides
+        FlickrController providesFlickrController(FlickrApiService apiService, PhotoAdapter photoAdapter) {
+            return new FlickrController(mFlickrActivity, apiService, photoAdapter);
         }
     }
 }
