@@ -18,17 +18,10 @@ import javax.inject.Inject;
 import dagger.Provides;
 
 public class FlickrActivity extends AppCompatActivity {
+    static final int INITIAL_PAGE_NUMBER = 1;
     private static final int SPAN_COUNT = 3;
-    private static final int INITIAL_PAGE_NUMBER = 1;
 
-    static boolean isRequested = false;
-    int mFirstVisibleItemPosition;
-    private int mPageNumber;
-    static int mTotalPages;
-    int mTotalItemCount;
-    int mVisibleItemCount;
     private RecyclerView mPhotoRecyclerView;
-    private String mTextRequest;
 
     @Inject
     FlickrController mController;
@@ -40,30 +33,10 @@ public class FlickrActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flickr_layout);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, SPAN_COUNT); // inject this one
-
-        mPageNumber = INITIAL_PAGE_NUMBER;
         mPhotoRecyclerView = findViewById(R.id.photo_recycler_view);
-        mPhotoRecyclerView.setLayoutManager(gridLayoutManager);
 
-        //rxrecycler  
-        mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                mVisibleItemCount = gridLayoutManager.getChildCount();
-                mTotalItemCount = gridLayoutManager.getItemCount();
-                mFirstVisibleItemPosition = gridLayoutManager.findFirstVisibleItemPosition();
-
-                if (mVisibleItemCount + mFirstVisibleItemPosition >= mTotalItemCount) { // amount of items that are being shown plus the previous items displayed
-                    if (mPageNumber <= mTotalPages) {
-                        //getListOfPhotos(mTextRequest, mTotalPages);
-                        mPageNumber++;
-                        mTotalItemCount = gridLayoutManager.getItemCount();
-                    }
-                }
-            }
-        });
+        mPhotoRecyclerView.addOnScrollListener(new FlickrScrollListener(
+                new GridLayoutManager(getApplicationContext(), SPAN_COUNT)));
 
         Component component = DaggerFlickrActivity_Component.builder()
                 .appComponent(((FlickrApplication) getApplication()).getAppComponent())
@@ -91,14 +64,34 @@ public class FlickrActivity extends AppCompatActivity {
                 .filter(charSequence -> charSequence.isSubmitted())
                 .distinctUntilChanged()
                 .subscribe(requestText -> {
-                        mPageNumber = INITIAL_PAGE_NUMBER;
-                        isRequested = false;
-                        mController.getListOfPhotos(requestText.queryText().toString(), mPageNumber);
+                        mController.setTextRequest(requestText.queryText().toString());
+                        mController.getListOfPhotos(requestText.queryText().toString(), false, INITIAL_PAGE_NUMBER);
                 });
     }
 
     public RecyclerView getPhotoRecyclerView() {
         return mPhotoRecyclerView;
+    }
+
+    class FlickrScrollListener extends RecyclerView.OnScrollListener {
+        GridLayoutManager mGridLayourManager;
+
+        public FlickrScrollListener(GridLayoutManager gridLayoutManager) {
+            this.mGridLayourManager = gridLayoutManager;
+            mPhotoRecyclerView.setLayoutManager(mGridLayourManager);
+        }
+
+        @Override
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            int mVisibleItemCount = mGridLayourManager.getChildCount();
+            int mTotalItemCount = mGridLayourManager.getItemCount();
+            int mFirstVisibleItemPosition = mGridLayourManager.findFirstVisibleItemPosition();
+
+            if (mVisibleItemCount + mFirstVisibleItemPosition >= mTotalItemCount) { // amount of items that are being shown plus the previous items displayed
+                mController.handleScroll();
+            }
+        }
     }
 
     @FlickrActivityScope
