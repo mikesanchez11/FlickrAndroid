@@ -17,7 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 @Module
 public class NetModule {
-    String baseUrl;
+    private String baseUrl;
 
     public NetModule(String baseUrl) {
         this.baseUrl = baseUrl;
@@ -28,40 +28,33 @@ public class NetModule {
     OkHttpClient providesOkHttpClient() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
 
-        //see what the body contains for debugging
-        //interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-
-        OkHttpClient client = new OkHttpClient.Builder()
+        return new OkHttpClient.Builder()
                 .addInterceptor(interceptor)
                 .addNetworkInterceptor(new StethoInterceptor())
                 .build();
-        return client;
     }
 
     @Provides
     @Singleton
     Gson providesGson() {
-        Gson gson = new GsonBuilder()
+        return new GsonBuilder()
                 .create();
-        return gson;
     }
 
     @Provides
     @Singleton
     Retrofit providesRetrofit(Gson gson, OkHttpClient client) {
-        Retrofit retrofit = new Retrofit.Builder()
+        return new Retrofit.Builder()
                 .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(client)
                 .build();
-        return retrofit;
     }
 
     @Provides
     @Singleton
     FlickrApiService providesFlickrApiService(Retrofit retrofit) {
-        FlickrApiService apiService = retrofit.create(FlickrApiService.class);
-        return apiService;
+        return retrofit.create(FlickrApiService.class);
     }
 }

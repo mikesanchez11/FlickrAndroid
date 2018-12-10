@@ -13,7 +13,7 @@ import java.util.List;
 public class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
     private List<Photo> mPhotoItems;
 
-    public PhotoAdapter() {
+    PhotoAdapter() {
         mPhotoItems = new ArrayList<>();
     }
 
@@ -35,11 +35,13 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
         return mPhotoItems.size();
     }
 
-    public void updatingPhotoAdapter(List<Photo> photoList, boolean isRequested) {
-        if(!isRequested) { // We want to clear the list when we have a new request
-            mPhotoItems.clear();
-        }
+    void updatingPhotoAdapter(List<Photo> photoList) {
         mPhotoItems.addAll(photoList);
+        notifyDataSetChanged();
+    }
+
+    public void clear() {
+        mPhotoItems.clear();
         notifyDataSetChanged();
     }
 }

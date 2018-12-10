@@ -1,24 +1,31 @@
 package com.image.finder;
 
+import android.annotation.SuppressLint;
+import android.support.annotation.VisibleForTesting;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.image.finder.models.PhotoPayload;
 import com.image.finder.retrofit.FlickrApiService;
+import com.jakewharton.rxbinding2.widget.RxSearchView;
+import com.jakewharton.rxbinding2.widget.SearchViewQueryTextEvent;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
-import static com.image.finder.FlickrActivity.INITIAL_PAGE_NUMBER;
 import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 
-public class FlickrController {
+class FlickrController {
+    private static final int CALLBACK = 1;
+    private static final int INITIAL_PAGE_NUMBER = 1;
+
     private static final String API_KEY = "3e7cc266ae2b0e0d78e279ce8e361736";
     private static final String ERROR_TEXT = "Connected to the internet? Try again";
     private static final String FORMAT = "json";
     private static final String METHOD = "flickr.photos.search";
-    private static final int CALLBACK = 1;
 
+    private boolean mIsRequested = false;
     private int mPageNumber;
     private int mTotalPages;
     private String mTextRequest;
@@ -27,44 +34,59 @@ public class FlickrController {
     private FlickrApiService mFlickrApiService;
     private PhotoAdapter mPhotoAdapter;
 
-    public FlickrController(FlickrActivity activity,
-                            FlickrApiService apiService,
-                            PhotoAdapter photoAdapter) {
+    FlickrController(FlickrActivity activity,
+                     FlickrApiService apiService,
+                     PhotoAdapter photoAdapter) {
         mFlickrApiService = apiService;
         mFlickrActivity = activity;
         mPhotoAdapter = photoAdapter;
         mPageNumber = INITIAL_PAGE_NUMBER;
     }
 
-    public void getListOfPhotos(String textRequest, boolean isRequested, int pageNumber) {
+    void handleScroll() {
+        mPageNumber++;
+        if (mPageNumber <= mTotalPages) {
+            if (mIsRequested) {
+                getListOfPhotos(mTextRequest, mPageNumber);
+            }
+        }
+    }
+
+    @SuppressLint("CheckResult")
+    void observingUserInput(SearchView searchView) {
+        RxSearchView.queryTextChangeEvents(searchView)
+                .filter(SearchViewQueryTextEvent::isSubmitted)
+                .map(queryTextEvent -> queryTextEvent.queryText().toString())
+                .distinctUntilChanged()
+                .as(autoDisposable(from(mFlickrActivity)))
+                .subscribe(textRequest -> {
+                    setTextRequest(textRequest);
+                    mPhotoAdapter.clear();
+                    getListOfPhotos(textRequest, INITIAL_PAGE_NUMBER);});
+    }
+
+    @VisibleForTesting
+    void getListOfPhotos(String textRequest, int pageNumber) {
         mFlickrApiService.listObjects(METHOD,
                 API_KEY, FORMAT, CALLBACK,
                 textRequest, pageNumber)
                 .subscribeOn(Schedulers.io())
+                .doOnNext(photoPayload -> mIsRequested = true)
+                .doOnComplete(() -> mIsRequested = true)
+                .doOnError(throwable -> mIsRequested = false)
                 .observeOn(AndroidSchedulers.mainThread())
                 .as(autoDisposable(from(mFlickrActivity)))
-                .subscribe(photoPayload -> handlerRequest(photoPayload, isRequested),
+                .subscribe(this::handlerRequest,
                         throwable -> Toast.makeText(mFlickrActivity,
                                 ERROR_TEXT, Toast.LENGTH_LONG).show());
     }
 
-    private void handlerRequest(PhotoPayload photoPayload, boolean isRequested) {
-        mPhotoAdapter.updatingPhotoAdapter(photoPayload.getPhotos().getPhoto(), isRequested);
-
-        if(!isRequested) {
-            mTotalPages = photoPayload.getPhotos().getPages();
-            mFlickrActivity.getPhotoRecyclerView().setAdapter(mPhotoAdapter);
-        }
+    private void handlerRequest(PhotoPayload photoPayload) {
+        mPhotoAdapter.updatingPhotoAdapter(photoPayload.getPhotos().getPhoto());
+        mTotalPages = photoPayload.getPhotos().getPages();
     }
 
-    public void handleScroll() {
-        if (mPageNumber <= mTotalPages) {
-            mPageNumber++;
-            getListOfPhotos(mTextRequest, true, mPageNumber);
-        }
-    }
-
-    public void setTextRequest(String mTextRequest) {
+    private void setTextRequest(String mTextRequest) {
         this.mTextRequest = mTextRequest;
     }
 }
