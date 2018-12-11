@@ -2,6 +2,9 @@ package com.image.finder.modules;
 
 import android.content.Context;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -13,6 +16,13 @@ public class AppModule {
 
     public AppModule(Context context) {
         mContext = context;
+    }
+
+    @Provides
+    @Singleton
+    Gson providesGson() {
+        return new GsonBuilder()
+                .create();
     }
 
     @Provides

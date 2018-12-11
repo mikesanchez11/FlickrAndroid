@@ -36,13 +36,6 @@ public class NetModule {
 
     @Provides
     @Singleton
-    Gson providesGson() {
-        return new GsonBuilder()
-                .create();
-    }
-
-    @Provides
-    @Singleton
     Retrofit providesRetrofit(Gson gson, OkHttpClient client) {
         return new Retrofit.Builder()
                 .baseUrl(baseUrl)

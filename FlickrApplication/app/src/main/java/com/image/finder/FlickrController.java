@@ -17,13 +17,8 @@ import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 
 class FlickrController {
-    private static final int CALLBACK = 1;
     private static final int INITIAL_PAGE_NUMBER = 1;
-
-    private static final String API_KEY = "3e7cc266ae2b0e0d78e279ce8e361736";
     private static final String ERROR_TEXT = "Connected to the internet? Try again";
-    private static final String FORMAT = "json";
-    private static final String METHOD = "flickr.photos.search";
 
     private boolean mIsRequested = false;
     private int mPageNumber;
@@ -67,8 +62,7 @@ class FlickrController {
 
     @VisibleForTesting
     void getListOfPhotos(String textRequest, int pageNumber) {
-        mFlickrApiService.listObjects(METHOD,
-                API_KEY, FORMAT, CALLBACK,
+        mFlickrApiService.listObjects(
                 textRequest, pageNumber)
                 .subscribeOn(Schedulers.io())
                 .doOnNext(photoPayload -> mIsRequested = true)
