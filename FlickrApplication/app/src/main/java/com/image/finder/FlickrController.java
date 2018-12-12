@@ -6,6 +6,7 @@ import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.image.finder.models.PhotoPayload;
+import com.image.finder.models.Photos;
 import com.image.finder.retrofit.FlickrApiService;
 import com.jakewharton.rxbinding2.widget.RxSearchView;
 import com.jakewharton.rxbinding2.widget.SearchViewQueryTextEvent;
@@ -18,7 +19,8 @@ import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvid
 
 class FlickrController {
     private static final int INITIAL_PAGE_NUMBER = 1;
-    private static final String ERROR_TEXT = "Connected to the internet? Try again";
+    @VisibleForTesting
+    static final String ERROR_TEXT = "Connected to the internet? Try again";
 
     private boolean mIsRequested = false;
     private int mPageNumber;
@@ -42,7 +44,7 @@ class FlickrController {
         mPageNumber++;
         if (mPageNumber <= mTotalPages) {
             if (mIsRequested) {
-                getListOfPhotos(mTextRequest, mPageNumber);
+                getListOfPhotos(mTextRequest, mPageNumber); // verify this got called
             }
         }
     }
@@ -60,8 +62,7 @@ class FlickrController {
                     getListOfPhotos(textRequest, INITIAL_PAGE_NUMBER);});
     }
 
-    @VisibleForTesting
-    void getListOfPhotos(String textRequest, int pageNumber) {
+    private void getListOfPhotos(String textRequest, int pageNumber) {
         mFlickrApiService.listObjects(
                 textRequest, pageNumber)
                 .subscribeOn(Schedulers.io())
@@ -76,8 +77,9 @@ class FlickrController {
     }
 
     private void handlerRequest(PhotoPayload photoPayload) {
-        mPhotoAdapter.updatingPhotoAdapter(photoPayload.getPhotos().getPhoto());
-        mTotalPages = photoPayload.getPhotos().getPages();
+        Photos photos = photoPayload.getPhotos();
+        mPhotoAdapter.updatingPhotoAdapter(photos.getPhoto()); // null pointer exception here since we can get a null photos object
+        mTotalPages = photos.getPages();
     }
 
     private void setTextRequest(String mTextRequest) {

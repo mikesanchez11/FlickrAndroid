@@ -1,5 +1,7 @@
 package com.image.finder.models;
 
+import io.reactivex.annotations.Nullable;
+
 @SuppressWarnings("unused")
 public class PhotoPayload {
 
@@ -7,6 +9,7 @@ public class PhotoPayload {
 
     private String stat;
 
+    @Nullable
     public Photos getPhotos() {
         return photos;
     }
