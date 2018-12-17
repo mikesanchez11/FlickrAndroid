@@ -19,6 +19,7 @@ import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvid
 
 class FlickrController {
     private static final int INITIAL_PAGE_NUMBER = 1;
+
     @VisibleForTesting
     static final String ERROR_TEXT = "Connected to the internet? Try again";
 
@@ -44,7 +45,7 @@ class FlickrController {
         mPageNumber++;
         if (mPageNumber <= mTotalPages) {
             if (mIsRequested) {
-                getListOfPhotos(mTextRequest, mPageNumber); // verify this got called
+                getListOfPhotos(mTextRequest, mPageNumber);
             }
         }
     }
@@ -78,7 +79,7 @@ class FlickrController {
 
     private void handlerRequest(PhotoPayload photoPayload) {
         Photos photos = photoPayload.getPhotos();
-        mPhotoAdapter.updatingPhotoAdapter(photos.getPhoto()); // null pointer exception here since we can get a null photos object
+        mPhotoAdapter.updatingPhotoAdapter(photos.getPhoto());
         mTotalPages = photos.getPages();
     }
 

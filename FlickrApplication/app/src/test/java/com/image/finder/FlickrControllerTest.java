@@ -29,12 +29,12 @@ import static org.mockito.Mockito.when;
 public class FlickrControllerTest {
 
     private FlickrController mFlickrController;
+    private SearchView mSearchView;
 
     @Mock
     private FlickrApiService mApiService;
     @Mock
     private PhotoAdapter mPhotoAdapter;
-    private SearchView mSearchView;
 
 
     @Before
