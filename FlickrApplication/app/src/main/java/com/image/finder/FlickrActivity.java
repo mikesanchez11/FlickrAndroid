@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SearchView;
@@ -32,6 +31,7 @@ public class FlickrActivity extends AppCompatActivity {
     @Inject
     PhotoAdapter mPhotoAdapter;
 
+    Menu mMenu;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,51 +54,28 @@ public class FlickrActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-        Log.d(TAG, "onCreateMenuBefore");
+        mMenu = menu; // we want to get rid of state, how can we not have this mMenu Variable?
+
+        startRetreivingUserRequest(menu);
+
+        return true;
+    }
+
+    private void startRetreivingUserRequest(Menu menu) {
         getMenuInflater().inflate(R.menu.flickr_search_menu, menu);
 
         MenuItem searchItem = menu.findItem(R.id.menu_item_search);
         final SearchView searchView = (SearchView) searchItem.getActionView();
 
         mController.observingUserInput(searchView);
-
-        return true;
     }
+
     @Override
     protected void onRestart() {
         super.onRestart();
-        Log.d(TAG, "onRestart()");
+        startRetreivingUserRequest(mMenu);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.d(TAG, "onStart()");
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume()");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause()");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop()");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy()");
-    }
     @FlickrActivityScope
     @dagger.Component(modules = Module.class, dependencies = AppComponent.class)
     interface Component {

@@ -49,14 +49,12 @@ class FlickrController {
                 mPageNumber++;
                 getListOfPhotos(mTextRequest, mPageNumber);
                 mIsRequested = false;
-                Log.d(TAG, "mPageNumber: " + mPageNumber);
             }
         }
     }
 
     @SuppressLint("CheckResult")
     void observingUserInput(SearchView searchView) {
-        Log.d(TAG, "observingUserInput");
         RxSearchView.queryTextChangeEvents(searchView)
                 .filter(SearchViewQueryTextEvent::isSubmitted)
                 .map(queryTextEvent -> queryTextEvent.queryText().toString())
@@ -71,7 +69,6 @@ class FlickrController {
     }
 
     private void getListOfPhotos(String textRequest, int pageNumber) {
-        Log.d(TAG, "getListOfPhotos");
         mFlickrApiService.listObjects(
                 textRequest, pageNumber)
                 .subscribeOn(Schedulers.io())
@@ -86,9 +83,7 @@ class FlickrController {
     }
 
     private void handlerRequest(PhotoPayload photoPayload) {
-        Log.d(TAG, "handleRequest");
         Photos photos = photoPayload.getPhotos();
-        Log.d(TAG, "Real Page: " + photos.getPage());
         mPhotoAdapter.updatingPhotoAdapter(photos.getPhoto());
         mTotalPages = photos.getPages();
     }
