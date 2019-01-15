@@ -21,7 +21,6 @@ import dagger.Provides;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 public class FlickrActivity extends AppCompatActivity {
-    public static final String TAG = "Michael";
     @Inject
     GridLayoutManager mGridLayoutManager;
     @Inject
@@ -31,7 +30,8 @@ public class FlickrActivity extends AppCompatActivity {
     @Inject
     PhotoAdapter mPhotoAdapter;
 
-    Menu mMenu;
+    private Menu mMenu;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
