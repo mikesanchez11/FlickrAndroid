@@ -3,7 +3,6 @@ package com.image.finder.modules;
 import com.image.finder.retrofit.FlickrApiService;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import javax.inject.Singleton;
 
@@ -17,11 +16,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 @Module
 public class NetModule {
-    private String baseUrl;
+    private static final String BASE_URL = "https://api.flickr.com/";
 
-    public NetModule(String baseUrl) {
-        this.baseUrl = baseUrl;
-    }
+    public NetModule() {}
 
     @Provides
     @Singleton
@@ -38,7 +35,7 @@ public class NetModule {
     @Singleton
     Retrofit providesRetrofit(Gson gson, OkHttpClient client) {
         return new Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(client)

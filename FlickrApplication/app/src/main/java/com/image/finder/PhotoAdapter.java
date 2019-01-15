@@ -40,7 +40,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
         notifyDataSetChanged();
     }
 
-    public void clear() {
+    void clear() {
         mPhotoItems.clear();
         notifyDataSetChanged();
     }

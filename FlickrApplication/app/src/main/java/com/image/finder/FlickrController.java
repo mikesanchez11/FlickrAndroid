@@ -2,6 +2,7 @@ package com.image.finder;
 
 import android.annotation.SuppressLint;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -14,6 +15,7 @@ import com.jakewharton.rxbinding2.widget.SearchViewQueryTextEvent;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
+import static com.image.finder.FlickrActivity.TAG;
 import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 
@@ -42,48 +44,52 @@ class FlickrController {
     }
 
     void handleScroll() {
-        mPageNumber++;
-        if (mPageNumber <= mTotalPages) {
+        if (mPageNumber < mTotalPages) {
             if (mIsRequested) {
+                mPageNumber++;
                 getListOfPhotos(mTextRequest, mPageNumber);
+                mIsRequested = false;
+                Log.d(TAG, "mPageNumber: " + mPageNumber);
             }
         }
     }
 
     @SuppressLint("CheckResult")
     void observingUserInput(SearchView searchView) {
+        Log.d(TAG, "observingUserInput");
         RxSearchView.queryTextChangeEvents(searchView)
                 .filter(SearchViewQueryTextEvent::isSubmitted)
                 .map(queryTextEvent -> queryTextEvent.queryText().toString())
                 .distinctUntilChanged()
                 .as(autoDisposable(from(mFlickrActivity)))
                 .subscribe(textRequest -> {
-                    setTextRequest(textRequest);
+                    mTextRequest = textRequest;
                     mPhotoAdapter.clear();
-                    getListOfPhotos(textRequest, INITIAL_PAGE_NUMBER);});
+                    mIsRequested = false;
+                    mPageNumber = INITIAL_PAGE_NUMBER;
+                    getListOfPhotos(textRequest, mPageNumber);});
     }
 
     private void getListOfPhotos(String textRequest, int pageNumber) {
+        Log.d(TAG, "getListOfPhotos");
         mFlickrApiService.listObjects(
                 textRequest, pageNumber)
                 .subscribeOn(Schedulers.io())
-                .doOnNext(photoPayload -> mIsRequested = true)
-                .doOnComplete(() -> mIsRequested = true)
-                .doOnError(throwable -> mIsRequested = false)
                 .observeOn(AndroidSchedulers.mainThread())
                 .as(autoDisposable(from(mFlickrActivity)))
-                .subscribe(this::handlerRequest,
-                        throwable -> Toast.makeText(mFlickrActivity,
-                                ERROR_TEXT, Toast.LENGTH_LONG).show());
+                .subscribe(photoPayload -> {
+                                handlerRequest(photoPayload);
+                                mIsRequested = true;},
+                            throwable -> {
+                                Toast.makeText(mFlickrActivity, ERROR_TEXT, Toast.LENGTH_LONG).show();
+                                mIsRequested = false;});
     }
 
     private void handlerRequest(PhotoPayload photoPayload) {
+        Log.d(TAG, "handleRequest");
         Photos photos = photoPayload.getPhotos();
+        Log.d(TAG, "Real Page: " + photos.getPage());
         mPhotoAdapter.updatingPhotoAdapter(photos.getPhoto());
         mTotalPages = photos.getPages();
-    }
-
-    private void setTextRequest(String mTextRequest) {
-        this.mTextRequest = mTextRequest;
     }
 }

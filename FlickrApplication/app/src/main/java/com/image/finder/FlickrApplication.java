@@ -1,14 +1,16 @@
 package com.image.finder;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.image.finder.components.AppComponent;
 import com.image.finder.components.DaggerAppComponent;
 import com.image.finder.modules.AppModule;
 import com.image.finder.modules.NetModule;
 
+import static com.image.finder.FlickrActivity.TAG;
+
 public class FlickrApplication extends Application {
-    private static final String BASE_URL = "https://api.flickr.com/";
     private AppComponent mAppComponent;
 
     @Override
@@ -17,7 +19,7 @@ public class FlickrApplication extends Application {
 
         mAppComponent = DaggerAppComponent.builder()
                 .appModule(new AppModule(getApplicationContext()))
-                .netModule(new NetModule(BASE_URL))
+                .netModule(new NetModule())
                 .build();
 
         mAppComponent.inject(this);
